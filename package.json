@@ -1,0 +1,33 @@
+{
+  "name": "website-monitor-testmo",
+  "version": "1.0.0",
+  "description": "Website monitoring solution using Playwright Test and Testmo",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "install:browsers": "playwright install chromium"
+  },
+  "keywords": [
+    "monitoring",
+    "website",
+    "uptime",
+    "playwright",
+    "testmo",
+    "screenshot",
+    "alerting"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+

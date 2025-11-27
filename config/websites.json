@@ -1,0 +1,13 @@
+[
+  {
+    "name": "ScreenCloud Start",
+    "url": "https://start.screencloud.com/",
+    "enabled": true,
+    "checkInterval": 15,
+    "performanceThreshold": 5000,
+    "slackChannel": "#alerts",
+    "webhookUrl": null,
+    "expectedRedirect": "auth.screencloud.com"
+  }
+]
+
