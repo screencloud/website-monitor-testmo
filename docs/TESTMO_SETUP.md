@@ -1,139 +1,171 @@
 # Testmo Setup Guide
 
-This guide walks you through setting up Testmo for website monitoring.
+This guide will help you set up Testmo for automated website monitoring.
 
 ## Prerequisites
 
-- Testmo company account
-- Access to Testmo project creation
-- Slack workspace (for notifications)
+- Testmo account (company account)
+- Testmo project created
+- Testmo API key or CLI access
 
 ## Step 1: Create Testmo Project
 
-1. Log in to your Testmo account
-2. Navigate to Projects
-3. Click "New Project"
-4. Name: "Website Monitor"
-5. Description: "Automated website monitoring using Playwright"
-6. Save the project
+1. Log in to your Testmo instance
+2. Navigate to **Projects** → **New Project**
+3. Name it "Website Monitor" or similar
+4. Select **Automation** as the project type
+5. Save the project and note the **Project ID**
 
-## Step 2: Configure Test Execution
+## Step 2: Configure Testmo CLI
 
-### Option A: Testmo Cloud Execution
+### Install Testmo CLI
 
-1. Go to Project Settings → Execution
-2. Select "Cloud Execution" (Testmo-managed runners)
-3. Configure environment:
-   - Node.js version: 18.x or higher
-   - Operating System: Linux (recommended)
-   - Browser: Chromium (Playwright)
+```bash
+npm install -g @testmo/testmo-cli
+```
 
-### Option B: Self-Hosted Runner
+### Authenticate
 
-1. Set up a self-hosted runner in Testmo
-2. Install Node.js and Playwright on the runner
-3. Configure runner to execute tests from this repository
+```bash
+testmo auth:login --instance your-instance.testmo.net
+```
 
-## Step 3: Set Up Scheduled Runs
+Or set environment variables:
 
-1. Go to Project Settings → Schedules
-2. Create a new schedule:
-   - **Name:** "Hourly Website Monitor"
-   - **Frequency:** Hourly
-   - **Time:** Configure based on your timezone
-   - **Test Suite:** Select the website monitoring tests
-   - **Execution Environment:** Select your configured environment
+```bash
+export TESTMO_INSTANCE=your-instance.testmo.net
+export TESTMO_API_KEY=your-api-key
+export TESTMO_PROJECT_ID=your-project-id
+```
 
-3. For multiple schedules (e.g., different intervals per website):
-   - Create separate schedules
-   - Use Testmo's filtering to run specific tests
+## Step 3: Configure Playwright for Testmo
 
-## Step 4: Configure Slack Integration
+The `playwright.config.js` is already configured to generate JUnit XML reports that Testmo can consume:
 
-1. In Testmo, go to Settings → Integrations
-2. Select "Slack"
-3. Connect your Slack workspace
-4. Configure notification rules:
-   - **On Test Failure:** Send notification to `#alerts` channel
-   - **On Test Pass:** Optional (can be disabled to reduce noise)
-   - **On Schedule Completion:** Send summary report
+```javascript
+reporter: [
+  ['junit', { outputFile: 'test-results/junit.xml' }],
+  // ... other reporters
+]
+```
 
-5. Customize notification format:
-   - Include test name, website URL, error message
-   - Include screenshot attachment
-   - Include performance metrics
+## Step 4: Submit Test Results
 
-## Step 5: Configure Test Results Upload
+### Manual Submission
 
-Testmo will automatically:
-- Import JSON test results from `test-results/results.json`
-- Attach screenshots from test runs
-- Track test history and trends
+```bash
+testmo automation:run:submit \
+  --instance your-instance.testmo.net \
+  --project-id YOUR_PROJECT_ID \
+  --name "Website Monitor Run - $(date +%Y-%m-%d\ %H:%M)" \
+  --source "Playwright" \
+  --results test-results/junit.xml \
+  -- npx playwright test
+```
 
-### Manual Configuration (if needed):
+### Using npm Script
 
-1. Go to Project Settings → Results
-2. Configure result import:
-   - Format: Playwright JSON
-   - Path: `test-results/results.json`
-   - Auto-import: Enabled
+Add to `package.json`:
 
-## Step 6: Set Up Environment Variables
+```json
+{
+  "scripts": {
+    "testmo:submit": "testmo automation:run:submit --instance $TESTMO_INSTANCE --project-id $TESTMO_PROJECT_ID --name \"Playwright Monitor Run\" --source \"Playwright\" --results test-results/junit.xml -- npx playwright test"
+  }
+}
+```
 
-If you need environment variables (e.g., for webhooks):
+Then run:
 
-1. Go to Project Settings → Environment Variables
-2. Add variables:
-   - `SLACK_WEBHOOK_URL` (if using custom Slack integration)
-   - `PAGERDUTY_WEBHOOK` (optional)
-   - `OPSGENIE_WEBHOOK` (optional)
+```bash
+TESTMO_INSTANCE=your-instance.testmo.net \
+TESTMO_PROJECT_ID=YOUR_PROJECT_ID \
+npm run testmo:submit
+```
 
-## Step 7: Test the Setup
+## Step 5: Set Up Scheduling in Testmo
 
-1. Trigger a manual test run in Testmo
-2. Verify:
-   - Tests execute successfully
-   - Screenshots are captured
-   - Status reports are generated
-   - Slack notifications are sent (on failure)
+1. Go to your Testmo project
+2. Navigate to **Automation** → **Schedules**
+3. Click **New Schedule**
+4. Configure:
+   - **Name**: "Hourly Website Monitor"
+   - **Frequency**: Every hour (or as needed)
+   - **Command**: Your testmo:submit command
+   - **Environment**: Set `TESTMO_INSTANCE`, `TESTMO_PROJECT_ID`, etc.
 
-## Step 8: Monitor and Maintain
+## Step 6: Configure Slack Integration in Testmo
 
-- Review test results in Testmo dashboard
-- Check scheduled runs are executing
-- Monitor Slack notifications
-- Review performance trends in Testmo
+1. Go to **Settings** → **Integrations** → **Slack**
+2. Connect your Slack workspace
+3. Configure notifications:
+   - **On test run completion**: Enabled
+   - **On test failures**: Enabled
+   - **Channel**: Your monitoring channel (e.g., `#alerts`)
+
+## Step 7: Custom Fields (Optional)
+
+Testmo supports custom fields. You can enhance test results with:
+
+- Website name
+- Load time
+- Status code
+- Error category
+- SSL expiration
+
+These can be added via Testmo's API or custom test attributes.
+
+## Step 8: View Results
+
+After runs complete:
+
+1. Go to your Testmo project
+2. Navigate to **Automation** → **Runs**
+3. View detailed results, screenshots, and trends
+4. Set up dashboards for monitoring overview
+
+## Benefits of Testmo Integration
+
+✅ **No GitHub Actions Minutes**: Runs on Testmo infrastructure  
+✅ **Centralized Management**: All test runs in one place  
+✅ **Historical Tracking**: Track uptime trends over time  
+✅ **Team Collaboration**: Share results with your team  
+✅ **Advanced Reporting**: Built-in analytics and dashboards  
+✅ **Native Integrations**: Slack, Jira, and more  
+✅ **Scheduling**: Built-in scheduling (no cron needed)  
 
 ## Troubleshooting
 
-### Tests Not Executing
+### JUnit XML Not Found
 
-- Check Testmo runner status
-- Verify Node.js and Playwright are installed
-- Check test file paths are correct
+Ensure Playwright is configured to generate JUnit XML:
 
-### Screenshots Not Appearing
+```javascript
+reporter: [['junit', { outputFile: 'test-results/junit.xml' }]]
+```
 
-- Verify screenshot paths in test code
-- Check file permissions on runner
-- Ensure screenshots are saved before test completion
+### Authentication Issues
 
-### Slack Notifications Not Working
+Verify your Testmo credentials:
 
-- Verify Slack integration is connected
-- Check notification rules are configured
-- Test Slack webhook manually
+```bash
+testmo auth:status
+```
 
-### Performance Issues
+### Project ID Not Found
 
-- Review Testmo execution logs
-- Check runner resources (CPU, memory)
-- Consider adjusting test concurrency
+Check your project ID in Testmo:
+1. Go to your project
+2. Check the URL: `https://your-instance.testmo.net/projects/PROJECT_ID`
+3. Or check project settings
 
 ## Next Steps
 
-- Set up additional websites in `config/websites.json`
-- Configure custom notification rules
 - Set up dashboards in Testmo
-- Review and optimize test execution time
+- Configure alerting rules
+- Integrate with other tools (Jira, etc.)
+- Set up custom reports
 
+---
+
+For more information, see [Testmo Documentation](https://www.testmo.com/docs).
