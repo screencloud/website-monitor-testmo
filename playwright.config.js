@@ -19,7 +19,13 @@ module.exports = defineConfig({
   reporter: [
     ['html'],
     ['json', { outputFile: 'test-results/results.json' }],
-    // Testmo will pick up the JSON report
+    ['junit', { 
+      outputFile: 'test-results/junit.xml',
+      // Enhanced JUnit XML for Testmo with properties
+      includeProjectInTestName: false,
+      suiteName: 'Website Monitoring'
+    }], // JUnit XML for Testmo
+    ['list'], // Console output
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
@@ -27,8 +33,15 @@ module.exports = defineConfig({
     // baseURL: 'http://127.0.0.1:3000',
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    screenshot: 'only-on-failure', // Screenshots on test failures
+    video: 'retain-on-failure', // Videos on test failures
+    /* Timeout settings */
+    actionTimeout: 30000,
+    navigationTimeout: 60000,
+    /* Viewport */
+    viewport: { width: 1280, height: 720 },
+    /* Ignore HTTPS errors for monitoring */
+    ignoreHTTPSErrors: false,
   },
 
   /* Configure projects for major browsers */
@@ -38,6 +51,9 @@ module.exports = defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
+
+  /* Global teardown to generate dashboard after all tests */
+  globalTeardown: require.resolve('./global-teardown.js'),
 
   /* Run your local dev server before starting the tests */
   // webServer: {
