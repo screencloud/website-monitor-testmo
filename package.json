@@ -4,12 +4,25 @@
   "description": "Website monitoring solution using Playwright Test and Testmo",
   "main": "index.js",
   "scripts": {
-    "test": "playwright test",
+    "test": "NODE_OPTIONS='--no-warnings' FORCE_COLOR=0 NO_COLOR=1 playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "test:report": "playwright show-report",
-    "install:browsers": "playwright install chromium"
+    "test:watch": "playwright test --ui",
+    "testmo:submit": "node scripts/testmo-submit.js",
+    "install:browsers": "playwright install chromium",
+    "verify": "node scripts/verify-setup.js",
+    "testmo:setup": "node scripts/testmo-setup.js",
+    "testmo:verify": "node scripts/testmo-setup.js",
+    "testmo:install": "npm install -g @testmo/testmo-cli",
+    "testmo:auto-setup": "./scripts/setup-testmo.sh",
+    "testmo:implement": "./scripts/implement-now.sh",
+    "implement": "./scripts/complete-implementation.sh",
+    "setup": "./scripts/install-and-setup.sh",
+    "server": "node src/utils/status-api.js",
+    "server:start": "node src/utils/status-api.js",
+    "dashboard": "node -e \"const { generateDashboard } = require('./src/utils/dashboard-generator'); const fs = require('fs'); const path = require('path'); const results = []; const dir = path.join(__dirname, 'test-results/screenshots'); if (fs.existsSync(dir)) { fs.readdirSync(dir).forEach(site => { const statusPath = path.join(dir, site, 'status.json'); if (fs.existsSync(statusPath)) { try { results.push(JSON.parse(fs.readFileSync(statusPath, 'utf8'))); } catch(e) {} } }); } if (results.length > 0) { generateDashboard(results.map(r => ({ name: r.name, url: r.url, isUp: r.isUp, statusCode: r.statusCode, loadTime: r.loadTime, errorMessage: r.errorMessage, errorCategory: r.errorCategory, performanceScore: r.performanceScore, performanceThreshold: r.performanceThreshold, sslInfo: r.ssl })), path.join(__dirname, 'test-results/dashboard.html')); console.log('Dashboard generated!'); } else { console.log('No results found. Run tests first.'); }\""
   },
   "keywords": [
     "monitoring",
@@ -23,11 +36,14 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@playwright/test": "^1.40.0"
+    "@playwright/test": "^1.40.0",
+    "axios": "^1.13.2",
+    "dotenv": "^17.2.3"
   },
-  "devDependencies": {},
   "engines": {
     "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "xml2js": "^0.6.2"
   }
 }
-
