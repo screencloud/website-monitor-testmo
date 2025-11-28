@@ -514,7 +514,7 @@ ls test-results/screenshots/
 
 - **Documentation**: See [DOCUMENTATION.md](DOCUMENTATION.md)
 - **Quick Start**: See [TESTMO_QUICK_START.md](TESTMO_QUICK_START.md) (same directory)
-- **Features**: See [FEATURES.md](FEATURES.md)
+- **Features**: See [../FEATURES.md](../FEATURES.md)
 - **Security**: See [SECURITY_AUDIT.md](SECURITY_AUDIT.md)
 
 ---

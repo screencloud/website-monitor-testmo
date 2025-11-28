@@ -16,11 +16,32 @@ try {
 }
 
 class TestmoAPI {
-  constructor(instance, apiKey) {
+  constructor(instance, projectIdOrApiKey, apiKey) {
     // Remove https:// if present
     const cleanInstance = instance.replace(/^https?:\/\//, '');
     this.baseURL = `https://${cleanInstance}/api/v1`;
-    this.apiKey = apiKey;
+    
+    // Handle both old signature (instance, apiKey) and new (instance, projectId, apiKey)
+    if (apiKey) {
+      // New signature: (instance, projectId, apiKey)
+      this.projectId = projectIdOrApiKey;
+      this.apiKey = apiKey;
+    } else {
+      // Old signature: (instance, apiKey)
+      this.projectId = null;
+      this.apiKey = projectIdOrApiKey;
+    }
+    
+    // Create axios client if available
+    if (axios) {
+      this.client = axios.create({
+        baseURL: this.baseURL,
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+    }
   }
 
   /**
@@ -142,6 +163,47 @@ class TestmoAPI {
       return await this.request('GET', `/automation/runs/${runId}`);
     } catch (error) {
       console.error(`❌ Failed to get run ${runId}: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Create test case in repository
+   */
+  async createTestCase(repositoryId, testCaseData) {
+    try {
+      if (this.client) {
+        const response = await this.client.post(`/repositories/${repositoryId}/cases`, testCaseData);
+        return response.data;
+      }
+      return await this.request('POST', `/repositories/${repositoryId}/cases`, testCaseData);
+    } catch (error) {
+      if (error.response) {
+        throw new Error(`API Error ${error.response.status}: ${error.response.data?.message || error.response.statusText}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Link automated test to test case
+   */
+  async linkAutomationToCase(repositoryId, caseId, automationTestId) {
+    try {
+      // This endpoint may vary - check Testmo API docs
+      const data = {
+        automation_test_id: automationTestId,
+        test_case_id: caseId
+      };
+      if (this.client) {
+        const response = await this.client.post(`/repositories/${repositoryId}/cases/${caseId}/automation`, data);
+        return response.data;
+      }
+      return await this.request('POST', `/repositories/${repositoryId}/cases/${caseId}/automation`, data);
+    } catch (error) {
+      if (error.response) {
+        throw new Error(`API Error ${error.response.status}: ${error.response.data?.message || error.response.statusText}`);
+      }
       throw error;
     }
   }

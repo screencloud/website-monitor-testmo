@@ -155,8 +155,8 @@ Testmo provides **full-featured GitHub integration** for unified test management
 - **Track Status**: Monitor issue resolution status
 - **Report Coverage**: Track which issues are covered by tests
 
-#### 2. GitHub Actions CI Integration
-- **Automated Runs**: Run monitoring tests via GitHub Actions
+#### 2. External CI/CD Integration
+- **Automated Runs**: Run monitoring tests via external CI/CD (GitHub Actions in separate project)
 - **Report Results**: Submit test results to Testmo from CI
 - **Parallel Testing**: Run multiple website checks in parallel
 - **Workflow Integration**: Integrate with deployment workflows
@@ -183,9 +183,12 @@ Testmo provides **full-featured GitHub integration** for unified test management
 3. Set up auto-linking
 4. Test issue creation
 
-### Step 3: Set Up GitHub Actions
-1. Create GitHub Actions workflow
-2. Configure Testmo CLI in workflow
+### Step 3: Set Up External Scheduling
+**Note**: GitHub Actions workflows are managed in a separate project.
+
+For external scheduling:
+1. Set up cron job or cloud scheduler
+2. Configure to run: `npm test && npm run testmo:submit`
 3. Set up test result submission
 4. Configure parallel testing (if needed)
 
@@ -197,76 +200,31 @@ Testmo provides **full-featured GitHub integration** for unified test management
 
 ---
 
-## 🔧 GitHub Actions Workflow Example
+## 🔧 External Scheduling Examples
 
-### Basic Workflow
-```yaml
-name: Website Monitoring
+**Note**: GitHub Actions workflows are managed in a separate project.
 
-on:
-  schedule:
-    - cron: '*/15 * * * *'  # Every 15 minutes
-  workflow_dispatch:
-
-jobs:
-  monitor:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      
-      - name: Install dependencies
-        run: npm ci
-      
-      - name: Install Playwright
-        run: npx playwright install chromium
-      
-      - name: Run tests
-        run: npm test
-        env:
-          TESTMO_INSTANCE: ${{ secrets.TESTMO_INSTANCE }}
-          TESTMO_PROJECT_ID: ${{ secrets.TESTMO_PROJECT_ID }}
-          TESTMO_API_KEY: ${{ secrets.TESTMO_API_KEY }}
-      
-      - name: Submit to Testmo
-        run: npm run testmo:submit
-        env:
-          TESTMO_INSTANCE: ${{ secrets.TESTMO_INSTANCE }}
-          TESTMO_PROJECT_ID: ${{ secrets.TESTMO_PROJECT_ID }}
-          TESTMO_API_KEY: ${{ secrets.TESTMO_API_KEY }}
+### Cron Job Example
+```bash
+# Run every 15 minutes
+*/15 * * * * cd /path/to/project && npm test && npm run testmo:submit
 ```
 
-### Parallel Testing Workflow
-```yaml
-name: Website Monitoring (Parallel)
+### Cloud Scheduler Example (AWS EventBridge)
+```json
+{
+  "ScheduleExpression": "rate(15 minutes)",
+  "Target": {
+    "Arn": "arn:aws:lambda:region:account:function:website-monitor",
+    "Input": "{\"command\": \"npm test && npm run testmo:submit\"}"
+  }
+}
+```
 
-on:
-  schedule:
-    - cron: '*/15 * * * *'
-  workflow_dispatch:
-
-jobs:
-  monitor:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        website: [site1, site2, site3]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - name: Install dependencies
-        run: npm ci
-      - name: Run test for ${{ matrix.website }}
-        run: npm test -- --grep "${{ matrix.website }}"
-      - name: Submit to Testmo
-        run: npm run testmo:submit
+### Manual Execution
+```bash
+# Run tests and submit to Testmo
+npm test && npm run testmo:submit
 ```
 
 ---
@@ -287,7 +245,7 @@ jobs:
 - Link issues to test cases in Testmo
 - Set up issue status tracking
 
-#### 2. **GitHub Actions CI Integration**
+#### 2. **External CI/CD Integration**
 **Benefits**:
 - Automated test runs
 - Scheduled monitoring
@@ -295,10 +253,11 @@ jobs:
 - Better DevOps workflow
 
 **Implementation**:
-- Create GitHub Actions workflow
+- Set up external scheduler (cron, cloud scheduler, etc.)
 - Schedule regular test runs
 - Submit results to Testmo
 - Set up parallel testing for multiple websites
+- Note: GitHub Actions workflows are in a separate project
 
 #### 3. **Enhanced Reporting**
 **Benefits**:
@@ -334,11 +293,11 @@ jobs:
 
 1. **Development**
    - Code changes pushed to GitHub
-   - GitHub Actions triggered
+   - External scheduler triggers tests (or manual execution)
 
 2. **Testing**
-   - GitHub Actions runs monitoring tests
-   - Tests execute via Playwright
+   - Tests run via Playwright
+   - Tests execute monitoring checks
    - Results collected
 
 3. **Reporting**
@@ -347,13 +306,13 @@ jobs:
    - Metrics updated
 
 4. **Issue Management**
-   - If website down, create GitHub issue
+   - If website down, create GitHub issue (if configured)
    - Link issue to test case in Testmo
    - Track issue resolution
 
 5. **Monitoring**
    - View results in Testmo
-   - Track issues in GitHub
+   - Track issues in GitHub (if configured)
    - Monitor trends and metrics
 
 ---
@@ -363,7 +322,8 @@ jobs:
 ### Immediate Actions
 1. **Study GitHub Integration**: Review Testmo GitHub integration docs
 2. **Plan Integration**: Decide which features to implement
-3. **Set Up GitHub Actions**: Create workflow for automated runs
+3. **Set Up External Scheduling**: Configure cron job or cloud scheduler for automated runs
+   - Note: GitHub Actions workflows are in a separate project
 4. **Configure Issues**: Set up issue creation and linking
 
 ### Future Enhancements

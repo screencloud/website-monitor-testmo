@@ -247,7 +247,7 @@ If you're currently using webhooks:
 ## 📚 Related Documentation
 
 - **Setup Guide**: [SETUP_AND_USAGE.md](SETUP_AND_USAGE.md) (same directory)
-- **Features**: [FEATURES.md](FEATURES.md)
+- **Features**: [../FEATURES.md](../FEATURES.md)
 - **Security**: [SECURITY_CONFIG.md](SECURITY_CONFIG.md)
 
 ---
