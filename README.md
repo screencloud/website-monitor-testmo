@@ -1,45 +1,80 @@
-# Website Monitor - Testmo Integration
+# Website Monitor - Testmo Edition 🚀
 
-Website monitoring solution using Playwright Test framework and Testmo for test execution and reporting.
+A production-ready website monitoring solution built with **Playwright Test** and **Testmo**, featuring advanced monitoring capabilities, beautiful dashboards, and intelligent alerting.
 
-## 🎯 Overview
+## ✨ Features
 
-This repository contains a Testmo-integrated website monitoring solution that:
-- Monitors websites using Playwright Test framework
-- Executes tests via Testmo scheduled runs
-- Captures screenshots and generates status reports
-- Integrates with Slack for notifications (via Testmo)
-- Tracks DNS, SSL, and performance metrics
+- 🔍 **Comprehensive Monitoring**: HTTP status, DNS resolution, SSL certificate validation, performance metrics
+- 📊 **Beautiful Dashboard**: Auto-generated HTML dashboard with real-time status visualization
+- 🔔 **Smart Notifications**: Slack integration with intelligent alerting (only on status changes or critical issues)
+- 📸 **Screenshot Capture**: Automatic screenshots on failures with timestamped history
+- 🎯 **Error Categorization**: Intelligent error classification (timeout, SSL, DNS, connection, HTTP, content errors)
+- ⚡ **Performance Tracking**: Load time monitoring with configurable thresholds
+- 🔐 **SSL Monitoring**: Certificate expiration tracking with early warnings
+- 📈 **Status Change Detection**: Tracks downtime duration and recovery events
+- 🌏 **Timezone Support**: All timestamps in Bangkok timezone (UTC+7)
+
+## 🏗️ Architecture
+
+```
+website-monitor-testmo/
+├── config/
+│   └── websites.json          # Website configurations
+├── tests/
+│   └── website-monitor.spec.js # Playwright Test specifications
+├── src/
+│   └── utils/
+│       ├── monitoring-helpers.js  # Core monitoring utilities
+│       ├── dashboard-generator.js # HTML dashboard generator
+│       └── slack-notifier.js     # Slack notification handler
+├── test-results/              # Test outputs (screenshots, reports, dashboard)
+├── playwright.config.js       # Playwright configuration
+└── package.json
+```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
-- Testmo account (company account)
+- **Node.js**: Version 18 or higher (required for Playwright)
+  - Check your version: `node --version`
+  - If using nvm: `nvm install 18 && nvm use 18`
 
-### Installation
+### 1. Install Dependencies
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd website-monitor-testmo
-```
-
-2. Install dependencies:
 ```bash
 npm install
+npx playwright install chromium
 ```
 
-3. Install Playwright browsers:
+### 2. Configure Websites
+
+Edit `config/websites.json`:
+
+```json
+[
+  {
+    "name": "ScreenCloud Start",
+    "url": "https://start.screencloud.com/",
+    "enabled": true,
+    "performanceThreshold": 5000,
+    "webhookUrl": null,
+    "expectedRedirect": "auth.screencloud.com"
+  }
+]
+```
+
+**Note**: `webhookUrl` can be `null` if using Slack Bot Token method (recommended).
+
+### 3. Configure Environment (Optional)
+
+Copy `.env.example` to `.env` and configure:
+
 ```bash
-npm run install:browsers
+cp .env.example .env
 ```
 
-4. Configure websites to monitor:
-Edit `config/websites.json` with your website configurations.
-
-### Running Tests Locally
+### 4. Run Tests
 
 ```bash
 # Run all tests
@@ -54,118 +89,231 @@ npm run test:headed
 # Debug mode
 npm run test:debug
 
-# View test report
+# View HTML report
 npm run test:report
 ```
 
-## 📁 Project Structure
+## 📊 Dashboard
+
+After running tests, a beautiful HTML dashboard is automatically generated at `test-results/dashboard.html`. Open it in your browser to see:
+
+- Real-time status of all monitored websites
+- Performance metrics and load times
+- SSL certificate information
+- Error details and categorization
+- Visual performance indicators
+
+## 🔔 Slack Notifications
+
+Notifications are sent to Slack when:
+- Website goes down
+- Website recovers (downtime ends)
+- SSL certificate is expiring soon (< 30 days)
+- Status changes occur
+
+### Configuration Methods
+
+**Method 1: Bot Token (Recommended)** ✅
+- Uses Slack Web API for more features and flexibility
+- Configure in `.env`:
+  ```bash
+  SLACK_BOT_TOKEN=xoxb-your-bot-token
+  SLACK_CHANNEL=#test-slack-e2e
+  SLACK_NOTIFICATION=true
+  SLACK_CHANNEL_ID=  # Optional
+  ```
+
+**Method 2: Webhook (Legacy)**
+- Per website in `config/websites.json` (`webhookUrl` field)
+- Globally via `SLACK_WEBHOOK_URL` environment variable
+
+See **[docs/setup/SLACK_SETUP.md](docs/setup/SLACK_SETUP.md)** for complete setup guide.
+
+## 🎯 Testmo Integration
+
+### Quick Start
+
+See **[docs/setup/TESTMO_QUICK_START.md](docs/setup/TESTMO_QUICK_START.md)** for a 5-minute setup guide.
+
+### Setup Testmo Project
+
+1. Create a new project in Testmo
+2. Configure automation runs to use Playwright
+3. Set up scheduled runs (e.g., every hour)
+
+### Verify Testmo Setup
+
+```bash
+npm run testmo:verify
+```
+
+This checks:
+- ✅ Testmo CLI installation
+- ✅ Environment variables
+- ✅ Authentication status
+- ✅ Playwright configuration
+
+### Submit Test Results
+
+```bash
+# Install Testmo CLI (if not already installed)
+npm install -g @testmo/testmo-cli
+
+# Set environment variables
+export TESTMO_INSTANCE=your-instance.testmo.net
+export TESTMO_PROJECT_ID=YOUR_PROJECT_ID
+
+# Submit results to Testmo
+npm run testmo:submit
+```
+
+The enhanced script will:
+- ✅ Validate environment variables
+- ✅ Run tests with Playwright
+- ✅ Generate JUnit XML report
+- ✅ Submit results to Testmo
+- ✅ Show you the Testmo run URL
+
+### Testmo Benefits
+
+- ✅ **Centralized Test Management**: All test runs tracked in one place
+- ✅ **Historical Data**: Track uptime trends over time
+- ✅ **Team Collaboration**: Share results with your team
+- ✅ **Scheduling**: Built-in scheduling (no GitHub Actions needed)
+- ✅ **Reporting**: Advanced reporting and analytics
+- ✅ **Integrations**: Native Slack, Jira, and other integrations
+
+## 📁 Test Results Structure
 
 ```
-website-monitor-testmo/
-├── config/
-│   └── websites.json          # Website configurations
-├── tests/
-│   └── website-monitor.spec.js # Playwright test file
-├── test-results/              # Test results and screenshots (gitignored)
-├── playwright.config.js       # Playwright configuration
-├── package.json
-└── README.md
+test-results/
+├── dashboard.html                    # HTML dashboard
+├── results.json                      # JSON test results
+├── junit.xml                        # JUnit XML (for Testmo)
+├── playwright-report/               # Playwright HTML report
+└── screenshots/
+    └── Website-Name/
+        ├── status.json              # Latest status report
+        ├── latest.png              # Latest screenshot
+        └── screenshot-*.png       # Timestamped screenshots
 ```
 
-## ⚙️ Configuration
+## 🔧 Configuration Options
 
 ### Website Configuration (`config/websites.json`)
 
 ```json
-[
-  {
-    "name": "Website Name",
-    "url": "https://example.com",
-    "enabled": true,
-    "checkInterval": 15,
-    "performanceThreshold": 5000,
-    "slackChannel": "#alerts",
-    "webhookUrl": null,
-    "expectedRedirect": "example.com"
-  }
-]
+{
+  "name": "Website Name",              // Display name
+  "url": "https://example.com",       // URL to monitor
+  "enabled": true,                     // Enable/disable monitoring
+  "performanceThreshold": 5000,       // Load time threshold (ms)
+  "webhookUrl": null,                  // Slack webhook (optional, null if using Bot Token)
+  "expectedRedirect": "domain.com"     // Expected redirect domain (optional)
+}
 ```
 
-### Playwright Configuration
+### Playwright Configuration (`playwright.config.js`)
 
-The `playwright.config.js` file is configured for:
-- Test execution in `tests/` directory
-- HTML and JSON reporters (Testmo uses JSON)
-- Screenshots on failure
-- Video recording on failure
-- Trace collection on retry
+- **Timeout**: 60 seconds per test
+- **Retries**: 2 retries on CI
+- **Workers**: 1 worker on CI (sequential), parallel locally
+- **Reporters**: HTML, JSON, JUnit XML, Console
 
-## 🔗 Testmo Integration
+## 📈 Monitoring Capabilities
 
-### Setting Up Testmo
+### HTTP Status Monitoring
+- Status code validation (2xx, 3xx = success)
+- Response time tracking
+- Redirect validation
 
-1. **Create a Testmo Project:**
-   - Log in to your Testmo account
-   - Create a new project for website monitoring
+### DNS Resolution
+- IPv4 resolution check
+- IPv6 resolution check (optional)
+- DNS resolution time
 
-2. **Configure Test Execution:**
-   - Set up scheduled runs (e.g., hourly)
-   - Configure test execution environment
-   - Set up Slack integration in Testmo
+### SSL Certificate Validation
+- Certificate validity check
+- Expiration date tracking
+- Days until expiry calculation
+- Early warning (< 30 days)
 
-3. **Upload Test Results:**
-   - Testmo will automatically pick up JSON reports from `test-results/results.json`
-   - Screenshots and artifacts can be uploaded as test attachments
+### Performance Monitoring
+- Page load time measurement
+- Performance score calculation (excellent/good/acceptable/poor)
+- Configurable thresholds
 
-### Testmo Features Used
+### Error Detection
+- Timeout detection
+- SSL/TLS errors
+- DNS resolution failures
+- Connection errors
+- HTTP errors (4xx, 5xx)
+- Content errors (404 pages, empty content)
 
-- ✅ Scheduled test runs
-- ✅ Test result tracking
-- ✅ Screenshot attachments
-- ✅ Slack notifications (via Testmo)
-- ✅ Test history and trends
-- ✅ Performance metrics
+## 🎨 Dashboard Features
 
-## 📊 Test Output
+- **Real-time Status**: Live status of all websites
+- **Performance Metrics**: Visual performance indicators
+- **Error Details**: Comprehensive error information
+- **SSL Status**: Certificate expiration tracking
+- **Responsive Design**: Works on desktop and mobile
+- **Beautiful UI**: Modern gradient design with smooth animations
 
-Tests generate:
-- **Status Reports:** `test-results/screenshots/{website-name}/status.json`
-- **Screenshots:** Timestamped and latest screenshots
-- **Test Results:** JSON format for Testmo import
+## 🔐 Security
 
-## 🔔 Notifications
+- Environment variables for sensitive data
+- `.env` file in `.gitignore`
+- Secure webhook handling
+- No hardcoded credentials
 
-Slack notifications are handled through Testmo's built-in notification system:
-- Configure Slack webhook in Testmo settings
-- Testmo will send notifications on test failures
-- Custom notification rules can be configured in Testmo
+## 📝 Scripts
 
-## 🆚 Comparison with GitHub Actions Version
+- `npm test` - Run all tests
+- `npm run test:ui` - Run with Playwright UI
+- `npm run test:headed` - Run in headed mode (see browser)
+- `npm run test:debug` - Debug mode
+- `npm run test:report` - View HTML report
+- `npm run verify` - Verify setup (Node.js version, dependencies, config)
+- `npm run testmo:setup` - Testmo setup and verification
+- `npm run testmo:verify` - Verify Testmo configuration
+- `npm run testmo:submit` - Submit test results to Testmo
+- `npm run install:browsers` - Install Chromium browser
+- `npm run dashboard` - Manually generate dashboard from existing results
+- `npm run server` - Start status API server (port 3000)
+- `npm run verify` - Verify setup and configuration
 
-| Feature | GitHub Actions | Testmo |
-|---------|---------------|--------|
-| Execution | GitHub Actions runners | Testmo infrastructure |
-| Scheduling | GitHub Actions cron | Testmo scheduler |
-| Notifications | Custom Slack scripts | Testmo built-in |
-| Reporting | Custom dashboard | Testmo test management |
-| Screenshots | Committed to repo | Testmo attachments |
-| Minutes Usage | GitHub Actions minutes | No GitHub Actions usage |
+## 📚 Documentation
 
-## 📝 Notes
-
-- This repository is independent from the GitHub Actions version
-- Both can run in parallel for comparison
-- Testmo handles all scheduling and execution
-- No GitHub Actions workflows needed
+- **[README.md](README.md)** - This file (main documentation)
+- **[docs/DOCUMENTATION.md](docs/DOCUMENTATION.md)** - 📚 **Complete documentation index**
+- **[docs/setup/SETUP_AND_USAGE.md](docs/setup/SETUP_AND_USAGE.md)** - ⭐ **Complete setup and usage guide**
+- **[docs/setup/SLACK_SETUP.md](docs/setup/SLACK_SETUP.md)** - ⭐ **Slack Bot Token integration guide**
+- **[docs/setup/TESTMO_QUICK_START.md](docs/setup/TESTMO_QUICK_START.md)** - Quick Testmo setup
+- **[FEATURES.md](FEATURES.md)** - Complete feature overview
+- **[docs/security/SECURITY_AUDIT.md](docs/security/SECURITY_AUDIT.md)** - Security audit report
+- **[docs/security/SECURITY_CONFIG.md](docs/security/SECURITY_CONFIG.md)** - Security configuration
+- **[docs/ENV_CONFIG.md](docs/ENV_CONFIG.md)** - Environment variables guide
+- **[docs/status/IMPROVEMENTS.md](docs/status/IMPROVEMENTS.md)** - Future enhancements roadmap
 
 ## 🤝 Contributing
 
-1. Make changes to test files
-2. Test locally with `npm test`
-3. Commit and push changes
-4. Testmo will pick up changes on next scheduled run
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
 ## 📄 License
 
 MIT
 
+## 🙏 Acknowledgments
+
+- Built with [Playwright](https://playwright.dev/)
+- Integrated with [Testmo](https://www.testmo.com/)
+- Inspired by modern monitoring best practices
+
+---
+
+**Made with ❤️ for reliable website monitoring**

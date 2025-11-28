@@ -1,0 +1,33 @@
+🚀 QUICK START GUIDE
+====================
+
+1. Verify Node.js 18+
+   node --version
+   # If not 18+, run: nvm install 18 && nvm use 18
+
+2. Install dependencies
+   npm install
+   npx playwright install chromium
+
+3. Configure websites
+   Edit: config/websites.json
+
+4. Configure environment (optional)
+   Edit: .env
+   - TESTMO_INSTANCE (for Testmo)
+   - SLACK_BOT_TOKEN, SLACK_CHANNEL, SLACK_NOTIFICATION (for Slack API)
+   - Or SLACK_WEBHOOK_URL (for Slack webhook - legacy)
+
+5. Verify setup
+   npm run verify
+
+6. Run tests
+   npm test
+
+7. View dashboard
+   open test-results/dashboard.html
+
+8. Submit to Testmo (optional)
+   npm run testmo:submit
+
+📖 Full guide: docs/setup/SETUP_AND_USAGE.md
