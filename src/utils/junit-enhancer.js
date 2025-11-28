@@ -65,24 +65,31 @@ async function enhanceJUnitXML(xmlPath) {
       });
     };
 
+    // Handle different XML root structures
+    let testsuites = null;
+    
     if (result.testsuites) {
-      if (result.testsuites.testsuite) {
-        // Handle array of testsuites
-        const suites = Array.isArray(result.testsuites.testsuite) 
-          ? result.testsuites.testsuite 
-          : [result.testsuites.testsuite];
-        suites.forEach(processTestsuite);
-      } else if (result.testsuites.$) {
-        // Handle testsuites with attributes but no testsuite children yet
-        // This shouldn't happen, but handle it
-      }
+      testsuites = result.testsuites;
+    } else if (result.root && result.root.testsuite) {
+      // Handle <root><testsuite> structure (Playwright format)
+      testsuites = { testsuite: result.root.testsuite };
+    } else if (result.root && result.root.testsuites) {
+      testsuites = result.root.testsuites;
     } else if (result.testsuite) {
       // Handle single testsuite format
-      processTestsuite(result.testsuite);
+      testsuites = { testsuite: result.testsuite };
+    }
+    
+    if (testsuites && testsuites.testsuite) {
+      // Handle array of testsuites
+      const suites = Array.isArray(testsuites.testsuite) 
+        ? testsuites.testsuite 
+        : [testsuites.testsuite];
+      suites.forEach(processTestsuite);
     }
 
     // Enhance testcase elements with metadata
-    const enhanceTestCases = (testcases) => {
+    const enhanceTestCases = (testcases, testsuite) => {
       if (!testcases) return;
       
       // Handle both array and single object
@@ -94,10 +101,22 @@ async function enhanceJUnitXML(xmlPath) {
         
         // Add properties to testcase if not exists
         if (!testcase.properties) {
-          testcase.properties = [{}];
+          testcase.properties = {};
         }
-        if (!testcase.properties[0].property) {
-          testcase.properties[0].property = [];
+        // Handle both array format [{}] and object format {}
+        if (Array.isArray(testcase.properties)) {
+          if (!testcase.properties[0]) {
+            testcase.properties[0] = {};
+          }
+          if (!testcase.properties[0].property) {
+            testcase.properties[0].property = [];
+          }
+        } else {
+          // Convert object to array format for consistency
+          testcase.properties = [testcase.properties];
+          if (!testcase.properties[0].property) {
+            testcase.properties[0].property = [];
+          }
         }
 
         // Try to extract URL from test name or system-out
@@ -108,8 +127,13 @@ async function enhanceJUnitXML(xmlPath) {
         const urlMatch = systemOut.match(/Checking website: (https?:\/\/[^\s]+)/);
         const url = urlMatch ? urlMatch[1] : 'N/A';
 
+        // Ensure we have property array
+        if (!testcase.properties.property) {
+          testcase.properties.property = [];
+        }
+        
         // Add test-specific properties
-        testcase.properties[0].property.push(
+        testcase.properties.property.push(
           { $: { name: 'test_url', value: url } },
           { $: { name: 'test_type', value: 'website_monitoring' } },
           { $: { name: 'test_category', value: 'uptime' } }
@@ -122,12 +146,12 @@ async function enhanceJUnitXML(xmlPath) {
           // For GitHub Actions, use artifact URL
           if (process.env.GITHUB_ACTIONS && process.env.GITHUB_SERVER_URL) {
             const artifactUrl = `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-            testcase.properties[0].property.push({
+            testcase.properties.property.push({
               $: { name: 'attachment', value: `${artifactUrl}/artifacts` }
             });
           } else {
             // Local path (will need to be hosted for Testmo)
-            testcase.properties[0].property.push({
+            testcase.properties.property.push({
               $: { name: 'screenshot_path', value: screenshotPath }
             });
           }
@@ -142,13 +166,12 @@ async function enhanceJUnitXML(xmlPath) {
       }
     };
 
-    if (result.testsuites && result.testsuites.testsuite) {
-      const suites = Array.isArray(result.testsuites.testsuite) 
-        ? result.testsuites.testsuite 
-        : [result.testsuites.testsuite];
+    // Use the same testsuites structure we found earlier
+    if (testsuites && testsuites.testsuite) {
+      const suites = Array.isArray(testsuites.testsuite) 
+        ? testsuites.testsuite 
+        : [testsuites.testsuite];
       suites.forEach(processTestCases);
-    } else if (result.testsuite) {
-      processTestCases(result.testsuite);
     }
 
     // Build enhanced XML

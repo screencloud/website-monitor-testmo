@@ -31,3 +31,6 @@ yarn-error.log*
 
 # Screenshots (optional - uncomment if you don't want to track screenshots)
 # test-results/screenshots/
+
+# Generated files
+docs/testmo-test-cases-import.csv

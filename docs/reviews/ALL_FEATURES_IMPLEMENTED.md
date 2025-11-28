@@ -12,26 +12,22 @@ All features have been successfully implemented, tested, and are ready for produ
 
 ## 🚀 Implemented Features
 
-### 1. ✅ GitHub Actions Workflow
-**File**: `.github/workflows/website-monitoring.yml`
+### 1. ✅ External Scheduling Support
+**Note**: GitHub Actions workflows are managed in a separate project.
 
 **Features**:
-- ✅ Scheduled runs every 15 minutes
-- ✅ Triggered on push to main/master
-- ✅ Triggered on pull requests
-- ✅ Manual trigger support (workflow_dispatch)
-- ✅ Automated test execution
-- ✅ Testmo result submission
-- ✅ GitHub Issues creation on failures
-- ✅ Artifact uploads (results, screenshots, dashboard)
-- ✅ Environment variable injection
+- ✅ Can be run manually via `npm test` and `npm run testmo:submit`
+- ✅ Can be scheduled via external schedulers (cron, cloud schedulers, etc.)
+- ✅ Testmo result submission support
+- ✅ GitHub Issues creation on failures (when run with GitHub token)
+- ✅ Environment variable injection support
 - ✅ Git information capture
 
 **Benefits**:
-- Fully automated monitoring
-- No manual intervention needed
-- CI/CD integration
-- Historical tracking
+- Flexible scheduling options
+- Can integrate with any CI/CD system
+- Works with external schedulers
+- Historical tracking via Testmo
 
 ---
 
@@ -136,15 +132,14 @@ All features have been successfully implemented, tested, and are ready for produ
 ## 📁 New Files Created
 
 ### Workflow Files
-- `.github/workflows/website-monitoring.yml` - GitHub Actions workflow
+- Note: GitHub Actions workflows are managed in a separate project
 
 ### Utility Files
 - `src/utils/github-issues.js` - GitHub Issues API client
 - `src/utils/automation-linking.js` - Automation linking utilities
 
 ### Documentation Files
-- `docs/GITHUB_ACTIONS_SETUP.md` - GitHub Actions setup guide
-- `docs/TESTMO_GITHUB_INTEGRATION.md` - GitHub integration guide
+- `docs/TESTMO_GITHUB_INTEGRATION.md` - GitHub integration guide (note: GitHub Actions in separate project)
 - `docs/TESTMO_AUTOMATION_LINKING.md` - Automation linking guide
 - `docs/TESTMO_XML_FORMAT.md` - XML format specifications
 - `docs/ALL_FEATURES_IMPLEMENTED.md` - This file
@@ -159,8 +154,8 @@ All features have been successfully implemented, tested, and are ready for produ
 
 ## 🔧 Configuration Required
 
-### GitHub Secrets
-Add these in **Settings > Secrets > Actions**:
+### Environment Variables
+Set these in your environment or `.env` file:
 
 **Required**:
 - `TESTMO_INSTANCE` - Your Testmo instance URL
@@ -173,31 +168,33 @@ Add these in **Settings > Secrets > Actions**:
 - `SLACK_CHANNEL_ID` - Slack channel ID
 - `SLACK_NOTIFICATION` - Set to `true` to enable
 
-**Automatic** (provided by GitHub):
-- `GITHUB_TOKEN` - Automatically available in workflows
+**Optional** (for GitHub Issues):
+- `GITHUB_TOKEN` - GitHub personal access token (for issue creation)
+- `GITHUB_REPOSITORY` - Repository in format `owner/repo`
 
 ---
 
-## 🎯 Workflow Features
+## 🎯 Execution Features
 
-### Scheduled Monitoring
-- Runs every 15 minutes automatically
-- No manual intervention needed
-- Continuous monitoring
+### Manual Execution
+- Run tests locally: `npm test`
+- Submit to Testmo: `npm run testmo:submit`
+- Full workflow: `npm test && npm run testmo:submit`
 
-### Trigger Options
-- **Schedule**: Every 15 minutes
-- **Push**: On code changes
-- **Pull Request**: On PR creation
-- **Manual**: Via GitHub Actions UI
+### External Scheduling
+- Can be scheduled via cron jobs
+- Can be scheduled via cloud schedulers (AWS EventBridge, GCP Scheduler, etc.)
+- Can be integrated into any CI/CD pipeline
+- Note: GitHub Actions workflows are in a separate project
 
-### Artifact Management
-- Test results (30 days retention)
-- Screenshots (7 days retention)
-- Dashboard (30 days retention)
+### Result Management
+- Test results stored in `test-results/`
+- Screenshots stored in `test-results/screenshots/`
+- Dashboard generated in `test-results/dashboard.html`
+- Results submitted to Testmo for historical tracking
 
 ### Issue Management
-- Automatic issue creation
+- Automatic issue creation (when GitHub token configured)
 - Issue deduplication
 - Rich issue content
 - Auto-labeling
@@ -218,8 +215,9 @@ Add these in **Settings > Secrets > Actions**:
 - ✅ Custom fields included
 - ✅ Run-level tags added
 
-### GitHub Actions → Testmo
-- ✅ Workflow submits results
+### External Scheduler → Testmo
+- ✅ External scheduler runs tests
+- ✅ Results submitted to Testmo
 - ✅ Git information included
 - ✅ Environment context provided
 - ✅ Performance metrics tracked
@@ -237,19 +235,19 @@ npm test
 npm run testmo:submit
 ```
 
-### GitHub Actions
-1. Push code to GitHub
-2. Workflow runs automatically
-3. View results in Actions tab
-4. Check GitHub Issues for failures
-5. View Testmo dashboard for details
+### External Scheduler
+1. Set up cron job or cloud scheduler
+2. Configure to run: `npm test && npm run testmo:submit`
+3. Tests run on schedule
+4. Results submitted to Testmo automatically
+5. Check GitHub Issues for failures (if configured)
+6. View Testmo dashboard for details
 
-### Manual Trigger
-1. Go to Actions tab
-2. Select "Website Monitoring" workflow
-3. Click "Run workflow"
-4. Select branch
-5. Click "Run workflow" button
+### Manual Execution
+1. Run tests: `npm test`
+2. Submit to Testmo: `npm run testmo:submit`
+3. View results in Testmo dashboard
+4. Check GitHub Issues for failures (if configured)
 
 ---
 
@@ -292,11 +290,11 @@ npm run testmo:submit
 2. ✅ All tests passing
 3. ✅ Documentation complete
 
-### After Push to GitHub
-1. Add GitHub secrets
-2. Enable GitHub Actions
-3. Monitor first workflow run
-4. Verify issue creation
+### After Setup
+1. Configure environment variables
+2. Set up external scheduler (if needed)
+3. Run tests manually to verify
+4. Verify Testmo submission
 5. Check Testmo dashboard
 
 ---
@@ -304,8 +302,7 @@ npm run testmo:submit
 ## 📚 Documentation
 
 All features are documented:
-- [GitHub Actions Setup](./GITHUB_ACTIONS_SETUP.md)
-- [GitHub Integration](./TESTMO_GITHUB_INTEGRATION.md)
+- [GitHub Integration](./TESTMO_GITHUB_INTEGRATION.md) (note: GitHub Actions in separate project)
 - [Automation Linking](./TESTMO_AUTOMATION_LINKING.md)
 - [XML Format](./TESTMO_XML_FORMAT.md)
 - [Implementation Complete](./IMPLEMENTATION_COMPLETE.md)
@@ -316,7 +313,7 @@ All features are documented:
 
 **All requested features have been successfully implemented:**
 
-1. ✅ GitHub Actions workflow for automated monitoring
+1. ✅ External scheduling support (GitHub Actions in separate project)
 2. ✅ GitHub Issues integration for failure tracking
 3. ✅ Enhanced XML format with attachments
 4. ✅ GitHub integration utilities

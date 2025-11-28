@@ -11,10 +11,10 @@
 - **[docs/setup/SETUP_AND_USAGE.md](setup/SETUP_AND_USAGE.md)** - Complete setup and usage guide
 - **[docs/setup/SLACK_SETUP.md](setup/SLACK_SETUP.md)** - Slack Bot Token integration guide
 - **[docs/setup/TESTMO_QUICK_START.md](setup/TESTMO_QUICK_START.md)** - 5-minute Testmo setup guide
-- **[docs/TESTMO_SETUP.md](TESTMO_SETUP.md)** - Detailed Testmo integration guide
+- **[docs/testmo/TESTMO_SETUP.md](testmo/TESTMO_SETUP.md)** - Detailed Testmo integration guide
 
 ### Features & Architecture
-- **[FEATURES.md](../FEATURES.md)** - Complete feature overview and architecture
+- **[docs/FEATURES.md](FEATURES.md)** - Complete feature overview and architecture
 
 ### Security
 - **[docs/security/SECURITY_AUDIT.md](security/SECURITY_AUDIT.md)** - Security audit report and fixes
@@ -22,12 +22,13 @@
 
 ### Integrations
 - **[docs/setup/SLACK_SETUP.md](setup/SLACK_SETUP.md)** - Slack Bot Token integration guide
-- **[docs/SLACK_NOTIFICATION_STRUCTURE.md](SLACK_NOTIFICATION_STRUCTURE.md)** - Slack notification structure reference
-- **[docs/SLACK_NOTIFICATION_COMPARISON.md](SLACK_NOTIFICATION_COMPARISON.md)** - GitHub Actions vs Testmo notification comparison
-- **[docs/GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md)** - GitHub Actions workflow setup guide
-- **[docs/TESTMO_GITHUB_INTEGRATION.md](TESTMO_GITHUB_INTEGRATION.md)** - GitHub Issues and Actions integration
-- **[docs/TESTMO_AUTOMATION_LINKING.md](TESTMO_AUTOMATION_LINKING.md)** - Automation linking guide
-- **[docs/TESTMO_XML_FORMAT.md](TESTMO_XML_FORMAT.md)** - JUnit XML format specifications
+- **[docs/slack/SLACK_NOTIFICATION_STRUCTURE.md](slack/SLACK_NOTIFICATION_STRUCTURE.md)** - Slack notification structure reference
+- **[docs/slack/SLACK_NOTIFICATION_COMPARISON.md](slack/SLACK_NOTIFICATION_COMPARISON.md)** - GitHub Actions vs Testmo notification comparison
+- **[docs/testmo/TESTMO_GITHUB_INTEGRATION.md](testmo/TESTMO_GITHUB_INTEGRATION.md)** - GitHub Issues integration (note: GitHub Actions in separate project)
+- **[docs/testmo/TESTMO_AUTOMATION_LINKING.md](testmo/TESTMO_AUTOMATION_LINKING.md)** - Automation linking guide
+- **[docs/testmo/TESTMO_XML_FORMAT.md](testmo/TESTMO_XML_FORMAT.md)** - JUnit XML format specifications
+- **[docs/testmo/TESTMO_PROJECT_DOCUMENTATION.md](testmo/TESTMO_PROJECT_DOCUMENTATION.md)** - Testmo project documentation (ready for upload)
+- **[docs/testmo/TESTMO_UPLOAD_GUIDE.md](testmo/TESTMO_UPLOAD_GUIDE.md)** - Guide for uploading/linking documentation to Testmo
 
 ### Configuration
 - **[docs/ENV_CONFIG.md](ENV_CONFIG.md)** - Environment variables configuration guide
@@ -35,11 +36,11 @@
 
 ### Status & Progress
 - **[docs/status/IMPROVEMENTS.md](status/IMPROVEMENTS.md)** - Future improvements and enhancements roadmap
-- **[docs/PROJECT_REVIEW.md](PROJECT_REVIEW.md)** - Comprehensive project review and assessment
-- **[docs/IMPLEMENTATION_COMPLETE.md](IMPLEMENTATION_COMPLETE.md)** - All implemented enhancements
-- **[docs/IMPROVEMENT_SUGGESTIONS.md](IMPROVEMENT_SUGGESTIONS.md)** - Improvement recommendations
-- **[docs/TESTMO_ENHANCEMENTS.md](TESTMO_ENHANCEMENTS.md)** - Testmo enhancement opportunities
-- **[docs/TESTMO_ENHANCEMENTS_IMPLEMENTED.md](TESTMO_ENHANCEMENTS_IMPLEMENTED.md)** - Implemented Testmo enhancements
+- **[docs/reviews/PROJECT_REVIEW.md](reviews/PROJECT_REVIEW.md)** - Comprehensive project review and assessment
+- **[docs/reviews/IMPLEMENTATION_COMPLETE.md](reviews/IMPLEMENTATION_COMPLETE.md)** - All implemented enhancements
+- **[docs/reviews/IMPROVEMENT_SUGGESTIONS.md](reviews/IMPROVEMENT_SUGGESTIONS.md)** - Improvement recommendations
+- **[docs/testmo/TESTMO_ENHANCEMENTS.md](testmo/TESTMO_ENHANCEMENTS.md)** - Testmo enhancement opportunities
+- **[docs/testmo/TESTMO_ENHANCEMENTS_IMPLEMENTED.md](testmo/TESTMO_ENHANCEMENTS_IMPLEMENTED.md)** - Implemented Testmo enhancements
 
 ---
 
@@ -48,14 +49,21 @@
 ```
 website-monitor-testmo/
 ├── README.md                    # Main documentation ⭐
-├── FEATURES.md                  # Features overview
+├── docs/FEATURES.md             # Features overview
 ├── docs/
 │   ├── DOCUMENTATION.md         # This file - Documentation index
 │   ├── ENV_CONFIG.md           # Environment variables guide
-│   ├── TESTMO_SETUP.md         # Detailed Testmo setup
-│   ├── SLACK_NOTIFICATION_STRUCTURE.md  # Slack notification structure
-│   ├── SLACK_NOTIFICATION_COMPARISON.md # Notification comparison
-│   ├── setup/                   # Setup guides
+│   ├── CHANGELOG.md            # Version history
+│   ├── testmo/                 # Testmo documentation
+│   │   ├── TESTMO_SETUP.md
+│   │   ├── TESTMO_*.md (12 files)
+│   ├── slack/                  # Slack documentation
+│   │   ├── SLACK_NOTIFICATION_*.md (2 files)
+│   ├── reviews/                # Reviews and improvements
+│   │   ├── PROJECT_REVIEW*.md
+│   │   ├── IMPROVEMENT*.md
+│   │   └── IMPLEMENTATION*.md
+│   ├── setup/                  # Setup guides
 │   │   ├── SETUP_AND_USAGE.md
 │   │   ├── SLACK_SETUP.md
 │   │   └── TESTMO_QUICK_START.md
@@ -76,7 +84,7 @@ website-monitor-testmo/
 - **Slack Integration**: [docs/setup/SLACK_SETUP.md](setup/SLACK_SETUP.md)
 - **Testmo Setup**: [docs/setup/TESTMO_QUICK_START.md](setup/TESTMO_QUICK_START.md)
 - **Security**: [docs/security/SECURITY_AUDIT.md](security/SECURITY_AUDIT.md)
-- **Features**: [FEATURES.md](../FEATURES.md)
+- **Features**: [docs/FEATURES.md](FEATURES.md)
 - **Environment Config**: [docs/ENV_CONFIG.md](ENV_CONFIG.md)
 - **Improvements**: [docs/status/IMPROVEMENTS.md](status/IMPROVEMENTS.md)
 

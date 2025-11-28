@@ -64,22 +64,24 @@ test.describe('Website Monitoring', () => {
      * Test each enabled website
      */
     enabledWebsites.forEach((websiteConfig) => {
+  /**
+   * Comprehensive monitoring for ${websiteConfig.url}
+   * 
+   * Monitoring Checks:
+   * - HTTP Status Code validation
+   * - DNS resolution (IPv4 & IPv6)
+   * - SSL certificate validity and expiration
+   * - Page load time and performance
+   * - Redirect validation (if expected)
+   * - Page title verification
+   * - Screenshot capture on failures
+   * 
+   * Performance Threshold: ${websiteConfig.performanceThreshold || 5000}ms
+   * Expected Redirect: ${websiteConfig.expectedRedirect || 'None'}
+   * Monitoring Interval: ${websiteConfig.checkInterval || 15} minutes
+   */
   test(`Monitor: ${websiteConfig.name}`, {
-    tag: ['@monitoring', '@website', '@uptime', `@${websiteConfig.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`],
-    description: `Comprehensive monitoring for ${websiteConfig.url}
-    
-**Monitoring Checks:**
-- HTTP Status Code validation
-- DNS resolution (IPv4 & IPv6)
-- SSL certificate validity and expiration
-- Page load time and performance
-- Redirect validation (if expected)
-- Page title verification
-- Screenshot capture on failures
-
-**Performance Threshold:** ${websiteConfig.performanceThreshold || 5000}ms
-**Expected Redirect:** ${websiteConfig.expectedRedirect || 'None'}
-**Monitoring Interval:** ${websiteConfig.checkInterval || 15} minutes`
+    tag: ['@monitoring', '@website', '@uptime', `@${websiteConfig.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`]
   }, async ({ page, browser }) => {
     const startTime = Date.now();
     const WEBSITE_URL = websiteConfig.url;
@@ -379,7 +381,8 @@ test.describe('Website Monitoring', () => {
     
     if (slackConfig.enabled || hasWebhook) {
       const webhookUrl = websiteConfig.webhookUrl || process.env.SLACK_WEBHOOK_URL;
-      const shouldNotify = !isUp || changeInfo.changed || (sslInfo.daysUntilExpiry !== null && sslInfo.daysUntilExpiry < 30);
+      // Only send notifications when test fails (website is down)
+      const shouldNotify = !isUp;
       
       if (shouldNotify) {
         try {
@@ -416,8 +419,7 @@ test.describe('Website Monitoring', () => {
           console.error(`   Error details:`, slackError);
         }
       } else {
-        console.log(`ℹ️ [${websiteConfig.name}] Slack notification skipped (shouldNotify=false)`);
-        console.log(`   Reasons: isUp=${isUp}, changed=${changeInfo.changed}, sslExpiring=${sslInfo.daysUntilExpiry !== null && sslInfo.daysUntilExpiry < 30}`);
+        console.log(`ℹ️ [${websiteConfig.name}] Slack notification skipped (test passed - notifications only sent on failures)`);
       }
     } else {
       console.log(`ℹ️ [${websiteConfig.name}] Slack not configured (enabled=${slackConfig.enabled}, hasWebhook=${hasWebhook})`);

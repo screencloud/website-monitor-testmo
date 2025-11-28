@@ -1,0 +1,4 @@
+# Dependabot configuration
+# CodeQL is disabled - we don't want automatic security scanning
+version: 2
+updates: []
