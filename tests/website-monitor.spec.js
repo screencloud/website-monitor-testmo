@@ -1,142 +1,51 @@
 // @ts-check
+// Load environment variables from .env file
+require('dotenv').config();
+
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
-const http = require('http');
-const dns = require('dns').promises;
 const { URL } = require('url');
 
-// Load website configurations
-const websitesConfig = JSON.parse(
-  fs.readFileSync(path.join(__dirname, '../config/websites.json'), 'utf8')
-);
+// Import utilities
+const {
+  ERROR_CATEGORIES,
+  categorizeError,
+  checkSSLCertificate,
+  checkDNSResolution,
+  getBangkokTimestamp,
+  calculatePerformanceScore,
+  getSeverity,
+  loadPreviousStatus,
+  detectStatusChange
+} = require('../src/utils/monitoring-helpers');
+const { sendSlackNotification } = require('../src/utils/slack-notifier');
+const { generateDashboard } = require('../src/utils/dashboard-generator');
+const { storeMetrics } = require('../src/utils/performance-metrics');
+const { getErrorCategoryMetadata } = require('../src/utils/monitoring-helpers');
+
+// GitHub Issues integration (optional)
+let GitHubIssues = null;
+try {
+  GitHubIssues = require('../src/utils/github-issues');
+} catch (e) {
+  // GitHub integration not available
+}
+
+// Import configuration validator
+const { loadWebsitesConfig } = require('../src/utils/config-validator');
+
+// Load and validate website configurations
+let websitesConfig;
+try {
+  websitesConfig = loadWebsitesConfig();
+} catch (error) {
+  console.error('❌ Configuration validation failed:', error.message);
+  process.exit(1);
+}
 
 // Filter enabled websites
 const enabledWebsites = websitesConfig.filter(site => site.enabled !== false);
-
-/**
- * Error categories for better categorization
- */
-const ERROR_CATEGORIES = {
-  TIMEOUT: 'timeout',
-  SSL_ERROR: 'ssl_error',
-  DNS_ERROR: 'dns_error',
-  CONNECTION_ERROR: 'connection_error',
-  HTTP_ERROR: 'http_error',
-  CONTENT_ERROR: 'content_error',
-  UNKNOWN_ERROR: 'unknown_error'
-};
-
-/**
- * Categorizes errors into specific types
- */
-function categorizeError(errorMessage, statusCode) {
-  if (!errorMessage) return ERROR_CATEGORIES.UNKNOWN_ERROR;
-  const msg = errorMessage.toLowerCase();
-  if (msg.includes('timeout')) return ERROR_CATEGORIES.TIMEOUT;
-  if (msg.includes('ssl') || msg.includes('tls') || msg.includes('certificate')) return ERROR_CATEGORIES.SSL_ERROR;
-  if (msg.includes('dns') || msg.includes('name_not_resolved')) return ERROR_CATEGORIES.DNS_ERROR;
-  if (msg.includes('connection_refused') || msg.includes('connection_error')) return ERROR_CATEGORIES.CONNECTION_ERROR;
-  if (statusCode >= 400) return ERROR_CATEGORIES.HTTP_ERROR;
-  if (msg.includes('404') || msg.includes('nosuchbucket') || msg.includes('error')) return ERROR_CATEGORIES.CONTENT_ERROR;
-  return ERROR_CATEGORIES.UNKNOWN_ERROR;
-}
-
-/**
- * Checks SSL certificate validity
- */
-async function checkSSLCertificate(url) {
-  return new Promise((resolve) => {
-    try {
-      const urlObj = new URL(url);
-      const hostname = urlObj.hostname;
-      const port = urlObj.port || 443;
-      const options = {
-        hostname: hostname,
-        port: port,
-        method: 'HEAD',
-        rejectUnauthorized: false
-      };
-      const req = https.request(options, (res) => {
-        const cert = res.socket.getPeerCertificate();
-        if (cert && cert.valid_to) {
-          const expirationDate = new Date(cert.valid_to);
-          const daysUntilExpiry = Math.floor((expirationDate - new Date()) / (1000 * 60 * 60 * 24));
-          resolve({
-            valid: true,
-            expirationDate: expirationDate.toISOString(),
-            daysUntilExpiry: daysUntilExpiry,
-            issuer: cert.issuer?.CN || 'Unknown'
-          });
-        } else {
-          resolve({ valid: false, error: 'No certificate found' });
-        }
-        req.destroy();
-      });
-      req.on('error', (err) => {
-        resolve({ valid: false, error: err.message });
-      });
-      req.setTimeout(5000, () => {
-        req.destroy();
-        resolve({ valid: false, error: 'Timeout' });
-      });
-      req.end();
-    } catch (err) {
-      resolve({ valid: false, error: err.message });
-    }
-  });
-}
-
-/**
- * Checks DNS resolution
- */
-async function checkDNSResolution(hostname) {
-  const dnsStartTime = Date.now();
-  try {
-    const addresses = await dns.resolve4(hostname);
-    const dnsTime = Date.now() - dnsStartTime;
-    return {
-      success: true,
-      time: dnsTime,
-      addresses: addresses
-    };
-  } catch (err) {
-    const dnsTime = Date.now() - dnsStartTime;
-    return {
-      success: false,
-      time: dnsTime,
-      error: err.message
-    };
-  }
-}
-
-/**
- * Generate timestamp in Bangkok timezone
- */
-function getBangkokTimestamp() {
-  const now = new Date();
-  const timestampISO = now.toISOString();
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Asia/Bangkok',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  });
-  const parts = formatter.formatToParts(now);
-  const year = parts.find(p => p.type === 'year').value;
-  const month = parts.find(p => p.type === 'month').value;
-  const day = parts.find(p => p.type === 'day').value;
-  const hours = parts.find(p => p.type === 'hour').value;
-  const minutes = parts.find(p => p.type === 'minute').value;
-  const seconds = parts.find(p => p.type === 'second').value;
-  const timestamp = `${year}-${month}-${day} ${hours}:${minutes}:${seconds} (BKK)`;
-  return { timestamp, timestampISO };
-}
 
 // Create test results directory
 const TEST_RESULTS_DIR = path.join(__dirname, '../test-results');
@@ -146,10 +55,32 @@ if (!fs.existsSync(SCREENSHOT_DIR)) {
 }
 
 /**
- * Test each enabled website
+ * Website Monitoring Test Suite
+ * Comprehensive monitoring with DNS, SSL, HTTP, and performance checks
  */
-enabledWebsites.forEach((websiteConfig) => {
-  test(`Monitor: ${websiteConfig.name}`, async ({ page, browser }) => {
+test.describe('Website Monitoring', () => {
+  test.describe('Production Sites', () => {
+    /**
+     * Test each enabled website
+     */
+    enabledWebsites.forEach((websiteConfig) => {
+  test(`Monitor: ${websiteConfig.name}`, {
+    tag: ['@monitoring', '@website', '@uptime', `@${websiteConfig.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`],
+    description: `Comprehensive monitoring for ${websiteConfig.url}
+    
+**Monitoring Checks:**
+- HTTP Status Code validation
+- DNS resolution (IPv4 & IPv6)
+- SSL certificate validity and expiration
+- Page load time and performance
+- Redirect validation (if expected)
+- Page title verification
+- Screenshot capture on failures
+
+**Performance Threshold:** ${websiteConfig.performanceThreshold || 5000}ms
+**Expected Redirect:** ${websiteConfig.expectedRedirect || 'None'}
+**Monitoring Interval:** ${websiteConfig.checkInterval || 15} minutes`
+  }, async ({ page, browser }) => {
     const startTime = Date.now();
     const WEBSITE_URL = websiteConfig.url;
     const TIMEOUT = 30000; // 30 seconds
@@ -218,8 +149,8 @@ enabledWebsites.forEach((websiteConfig) => {
       });
 
       loadTime = Date.now() - navigationStart;
-      statusCode = response.status();
-      statusText = response.statusText();
+      statusCode = response?.status() || 0;
+      statusText = response?.statusText() || '';
 
       console.log(`✓ [${websiteConfig.name}] Response received`);
       console.log(`✓ [${websiteConfig.name}] Status Code: ${statusCode} ${statusText}`);
@@ -337,8 +268,14 @@ enabledWebsites.forEach((websiteConfig) => {
 
     // Generate status report
     const errorCategory = categorizeError(errorMessage, statusCode);
-    const severity = isUp ? 'info' : (errorCategory === ERROR_CATEGORIES.TIMEOUT || errorCategory === ERROR_CATEGORIES.CONNECTION_ERROR ? 'critical' : 'warning');
+    const severity = getSeverity(isUp, errorCategory, statusCode);
     const isSlow = loadTime && loadTime > PERFORMANCE_THRESHOLD;
+    const performanceScore = calculatePerformanceScore(loadTime, PERFORMANCE_THRESHOLD);
+
+    // Load previous status for comparison
+    const statusPath = path.join(websiteStatusDir, 'status.json');
+    const previousStatus = loadPreviousStatus(statusPath);
+    const changeInfo = detectStatusChange({ isUp, status: isUp ? 'UP' : 'DOWN', timestampISO }, previousStatus);
 
     const report = {
       name: websiteConfig.name,
@@ -354,16 +291,18 @@ enabledWebsites.forEach((websiteConfig) => {
       loadTime: loadTime,
       title: title || 'N/A',
       redirectedToExpected: redirectedToExpected,
-      error: errorMessage || null,
+      errorMessage: errorMessage || null,
       errorCategory: errorCategory,
       severity: severity,
       checkDuration: Date.now() - startTime,
       isSlow: isSlow || false,
       performanceThreshold: PERFORMANCE_THRESHOLD,
+      performanceScore: performanceScore,
       dns: {
         success: dnsInfo.success,
         time: dnsInfo.time,
         addresses: dnsInfo.addresses || [],
+        ipv6Addresses: dnsInfo.ipv6Addresses || [],
         error: dnsInfo.error || null
       },
       ssl: {
@@ -371,27 +310,211 @@ enabledWebsites.forEach((websiteConfig) => {
         expirationDate: sslInfo.expirationDate || null,
         daysUntilExpiry: sslInfo.daysUntilExpiry || null,
         issuer: sslInfo.issuer || null,
+        subject: sslInfo.subject || null,
         error: sslInfo.error || null,
         expiringSoon: sslInfo.daysUntilExpiry !== null && sslInfo.daysUntilExpiry < 30
-      }
+      },
+      changeInfo: changeInfo
     };
 
     // Save status report
-    const statusPath = path.join(websiteStatusDir, 'status.json');
     fs.writeFileSync(statusPath, JSON.stringify(report, null, 2));
+    
+    // Store performance metrics
+    storeMetrics(websiteConfig.name, {
+      loadTime: loadTime || 0,
+      dnsTime: dnsInfo.time || 0,
+      sslCheckTime: 0, // Could be tracked separately
+      totalTime: report.checkDuration || 0,
+      isUp: isUp,
+      statusCode: statusCode,
+      errorCategory: errorCategory,
+      timestamp: timestampISO
+    });
+
+    // Create GitHub issue if website is down (optional)
+    if (!isUp && GitHubIssues && process.env.GITHUB_TOKEN && process.env.GITHUB_REPOSITORY) {
+      try {
+        const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+        const githubIssues = new GitHubIssues(process.env.GITHUB_TOKEN, owner, repo);
+        
+        // Check if issue already exists
+        const existingIssue = await githubIssues.findExistingIssue(websiteConfig.name);
+        
+        if (!existingIssue) {
+          // Create new issue
+          const workflowRunId = process.env.GITHUB_RUN_ID;
+          const workflowRunUrl = process.env.GITHUB_SERVER_URL 
+            ? `${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${workflowRunId}`
+            : null;
+          
+          await githubIssues.createWebsiteFailureIssue(report, {
+            workflowRunId: workflowRunId,
+            workflowRunUrl: workflowRunUrl,
+            commitSha: process.env.GITHUB_SHA,
+            branch: process.env.GITHUB_REF_NAME || process.env.GITHUB_REF,
+            author: process.env.GITHUB_ACTOR
+          });
+          
+          console.log(`✅ [${websiteConfig.name}] GitHub issue created for website failure`);
+        } else {
+          console.log(`ℹ️ [${websiteConfig.name}] GitHub issue already exists: #${existingIssue.number}`);
+        }
+      } catch (githubError) {
+        console.warn(`⚠️ [${websiteConfig.name}] Failed to create GitHub issue: ${githubError.message}`);
+      }
+    } else if (!isUp && (!GitHubIssues || !process.env.GITHUB_TOKEN)) {
+      // Website is down but GitHub integration not configured
+      console.log(`ℹ️ [${websiteConfig.name}] Website is DOWN - GitHub issue creation skipped (not configured)`);
+    }
 
     console.log(`\n📊 [${websiteConfig.name}] Status Report:`);
     console.log(JSON.stringify(report, null, 2));
 
+    // Send Slack notification if configured
+    // Supports both Bot Token (preferred) and Webhook methods
+    const { getSlackConfig } = require('../src/utils/slack-notifier');
+    const slackConfig = getSlackConfig();
+    const hasWebhook = websiteConfig.webhookUrl || process.env.SLACK_WEBHOOK_URL;
+    
+    if (slackConfig.enabled || hasWebhook) {
+      const webhookUrl = websiteConfig.webhookUrl || process.env.SLACK_WEBHOOK_URL;
+      const shouldNotify = !isUp || changeInfo.changed || (sslInfo.daysUntilExpiry !== null && sslInfo.daysUntilExpiry < 30);
+      
+      if (shouldNotify) {
+        try {
+          // Include latest screenshot path if available
+          const latestScreenshot = path.join(websiteStatusDir, 'latest.png');
+          const screenshotPath = fs.existsSync(latestScreenshot) ? latestScreenshot : null;
+          
+          console.log(`📤 [${websiteConfig.name}] Sending Slack notification...`);
+          const notificationResult = await sendSlackNotification(webhookUrl, `Website ${isUp ? 'UP' : 'DOWN'}`, {
+            siteName: websiteConfig.name,
+            url: WEBSITE_URL,
+            finalUrl: finalUrl || WEBSITE_URL,
+            pageTitle: title || 'N/A',
+            isUp: isUp,
+            statusCode: statusCode,
+            loadTime: loadTime,
+            checkDuration: Date.now() - startTime,
+            redirectedToExpected: websiteConfig.expectedRedirect ? redirectedToExpected : null,
+            previousStatus: previousStatus,
+            errorMessage: errorMessage,
+            errorCategory: errorCategory,
+            sslInfo: sslInfo,
+            changeInfo: changeInfo,
+            screenshotPath: screenshotPath
+          });
+          
+          if (notificationResult) {
+            console.log(`✓ [${websiteConfig.name}] Slack notification sent successfully`);
+          } else {
+            console.warn(`⚠️ [${websiteConfig.name}] Slack notification returned false (may have failed silently)`);
+          }
+        } catch (slackError) {
+          console.error(`❌ [${websiteConfig.name}] Failed to send Slack notification: ${slackError.message}`);
+          console.error(`   Error details:`, slackError);
+        }
+      } else {
+        console.log(`ℹ️ [${websiteConfig.name}] Slack notification skipped (shouldNotify=false)`);
+        console.log(`   Reasons: isUp=${isUp}, changed=${changeInfo.changed}, sslExpiring=${sslInfo.daysUntilExpiry !== null && sslInfo.daysUntilExpiry < 30}`);
+      }
+    } else {
+      console.log(`ℹ️ [${websiteConfig.name}] Slack not configured (enabled=${slackConfig.enabled}, hasWebhook=${hasWebhook})`);
+    }
+
     // Assert website is up (Testmo will track this)
     if (!isUp) {
-      test.fail(true, `Website ${websiteConfig.name} is DOWN: ${errorMessage}`);
+      // Take failure screenshot before failing
+      try {
+        const failureScreenshot = path.join(websiteStatusDir, `failure-${Date.now()}.png`);
+        await page.screenshot({ path: failureScreenshot, fullPage: true });
+        console.log(`📸 [${websiteConfig.name}] Failure screenshot saved: ${failureScreenshot}`);
+      } catch (screenshotError) {
+        console.warn(`⚠️ [${websiteConfig.name}] Failed to save failure screenshot: ${screenshotError.message}`);
+      }
+      
+      test.fail(true, `Website ${websiteConfig.name} is DOWN: ${errorMessage || 'Unknown error'}`);
     }
 
     // Performance assertion
     if (isSlow) {
       console.warn(`⚠️ [${websiteConfig.name}] Performance warning: Load time ${loadTime}ms exceeds threshold of ${PERFORMANCE_THRESHOLD}ms`);
     }
+
+    // SSL expiration warning
+    if (sslInfo.daysUntilExpiry !== null && sslInfo.daysUntilExpiry < 30) {
+      console.warn(`⚠️ [${websiteConfig.name}] SSL certificate expiring soon: ${sslInfo.daysUntilExpiry} days remaining`);
+    }
+  });
+    });
+
+    // Add afterEach hook to handle test failures and send Slack notifications
+    test.afterEach(async ({ page }, testInfo) => {
+    // Only process if test failed
+    if (testInfo.status === 'failed' || testInfo.status === 'timedOut') {
+      const websiteConfig = enabledWebsites.find(site => testInfo.title.includes(site.name));
+      if (!websiteConfig) return;
+
+      const websiteStatusDir = path.join(SCREENSHOT_DIR, websiteConfig.name.replace(/[^a-zA-Z0-9]/g, '-'));
+      if (!fs.existsSync(websiteStatusDir)) {
+        fs.mkdirSync(websiteStatusDir, { recursive: true });
+      }
+
+      const failureMessage = testInfo.error?.message || testInfo.error?.toString() || 'Test failed';
+      const failureScreenshot = path.join(websiteStatusDir, `failure-${Date.now()}.png`);
+      let screenshotSaved = false;
+
+      // Take screenshot on failure (if page is available)
+      try {
+        if (page && !page.isClosed()) {
+          await page.screenshot({ 
+            path: failureScreenshot, 
+            fullPage: true 
+          });
+          screenshotSaved = true;
+          console.log(`📸 [${websiteConfig.name}] Failure screenshot saved: ${failureScreenshot}`);
+        }
+      } catch (screenshotError) {
+        console.warn(`⚠️ [${websiteConfig.name}] Failed to save failure screenshot: ${screenshotError.message}`);
+      }
+
+      // Send Slack notification on failure
+      const { getSlackConfig, sendSlackNotification } = require('../src/utils/slack-notifier');
+      const slackConfig = getSlackConfig();
+      const hasWebhook = websiteConfig.webhookUrl || process.env.SLACK_WEBHOOK_URL;
+      
+      if (slackConfig.enabled || hasWebhook) {
+        const webhookUrl = websiteConfig.webhookUrl || process.env.SLACK_WEBHOOK_URL;
+        try {
+          // Load previous status for comparison
+          const statusPath = path.join(websiteStatusDir, 'status.json');
+          const previousStatus = loadPreviousStatus(statusPath);
+
+          await sendSlackNotification(webhookUrl, `❌ Test Failed: ${websiteConfig.name}`, {
+            siteName: websiteConfig.name,
+            url: websiteConfig.url,
+            finalUrl: websiteConfig.url,
+            pageTitle: 'N/A',
+            isUp: false,
+            statusCode: 0,
+            loadTime: 0,
+            checkDuration: testInfo.duration || 0,
+            redirectedToExpected: null,
+            previousStatus: previousStatus,
+            errorMessage: failureMessage,
+            errorCategory: 'TEST_FAILURE',
+            sslInfo: null,
+            changeInfo: null,
+            screenshotPath: screenshotSaved ? failureScreenshot : null
+          });
+          console.log(`✓ [${websiteConfig.name}] Failure notification sent to Slack`);
+        } catch (slackError) {
+          console.warn(`⚠️ [${websiteConfig.name}] Failed to send failure notification: ${slackError.message}`);
+        }
+      }
+    }
+    });
   });
 });
 
