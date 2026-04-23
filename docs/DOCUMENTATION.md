@@ -26,6 +26,7 @@
 - **[docs/slack/SLACK_NOTIFICATION_COMPARISON.md](slack/SLACK_NOTIFICATION_COMPARISON.md)** - GitHub Actions vs Testmo notification comparison
 - **[docs/testmo/TESTMO_GITHUB_INTEGRATION.md](testmo/TESTMO_GITHUB_INTEGRATION.md)** - GitHub Issues integration (note: GitHub Actions in separate project)
 - **[docs/testmo/TESTMO_AUTOMATION_LINKING.md](testmo/TESTMO_AUTOMATION_LINKING.md)** - Automation linking guide
+- **[docs/testmo/TESTMO_SESSIONS.md](testmo/TESTMO_SESSIONS.md)** - Sessions guide for manual testing and verification
 - **[docs/testmo/TESTMO_XML_FORMAT.md](testmo/TESTMO_XML_FORMAT.md)** - JUnit XML format specifications
 - **[docs/testmo/TESTMO_PROJECT_DOCUMENTATION.md](testmo/TESTMO_PROJECT_DOCUMENTATION.md)** - Testmo project documentation (ready for upload)
 - **[docs/testmo/TESTMO_UPLOAD_GUIDE.md](testmo/TESTMO_UPLOAD_GUIDE.md)** - Guide for uploading/linking documentation to Testmo
@@ -56,7 +57,7 @@ website-monitor-testmo/
 │   ├── CHANGELOG.md            # Version history
 │   ├── testmo/                 # Testmo documentation
 │   │   ├── TESTMO_SETUP.md
-│   │   ├── TESTMO_*.md (12 files)
+│   │   ├── TESTMO_*.md (13 files)
 │   ├── slack/                  # Slack documentation
 │   │   ├── SLACK_NOTIFICATION_*.md (2 files)
 │   ├── reviews/                # Reviews and improvements

@@ -207,6 +207,151 @@ class TestmoAPI {
       throw error;
     }
   }
+
+  /**
+   * Create a new session
+   * @param {number} projectId - Project ID
+   * @param {Object} sessionData - Session data
+   * @param {string} sessionData.name - Session name (required)
+   * @param {string|number} sessionData.template - Template ID or name (required)
+   * @param {string|number} sessionData.state - State ID or name (required, e.g., "New")
+   * @param {string} [sessionData.configuration] - Configuration/environment
+   * @param {number} [sessionData.milestone] - Milestone ID
+   * @param {string} [sessionData.mission] - Mission/description (rich text)
+   * @param {number} [sessionData.assignedTo] - User ID to assign to
+   * @param {number} [sessionData.estimate] - Estimate in hours
+   * @param {Array<number>} [sessionData.issues] - Issue IDs
+   * @param {Array<string>} [sessionData.tags] - Tags
+   * @returns {Promise<Object>} Created session
+   */
+  async createSession(projectId, sessionData) {
+    try {
+      const endpoint = `/projects/${projectId}/sessions`;
+      if (this.client) {
+        const response = await this.client.post(endpoint, sessionData);
+        return response.data;
+      }
+      return await this.request('POST', endpoint, sessionData);
+    } catch (error) {
+      if (error.response) {
+        throw new Error(`API Error ${error.response.status}: ${error.response.data?.message || error.response.statusText}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get session details
+   * @param {number} projectId - Project ID
+   * @param {number} sessionId - Session ID
+   * @returns {Promise<Object>} Session details
+   */
+  async getSession(projectId, sessionId) {
+    try {
+      const endpoint = `/projects/${projectId}/sessions/${sessionId}`;
+      if (this.client) {
+        const response = await this.client.get(endpoint);
+        return response.data;
+      }
+      return await this.request('GET', endpoint);
+    } catch (error) {
+      if (error.response) {
+        throw new Error(`API Error ${error.response.status}: ${error.response.data?.message || error.response.statusText}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Update session
+   * @param {number} projectId - Project ID
+   * @param {number} sessionId - Session ID
+   * @param {Object} sessionData - Updated session data
+   * @returns {Promise<Object>} Updated session
+   */
+  async updateSession(projectId, sessionId, sessionData) {
+    try {
+      const endpoint = `/projects/${projectId}/sessions/${sessionId}`;
+      if (this.client) {
+        const response = await this.client.patch(endpoint, sessionData);
+        return response.data;
+      }
+      return await this.request('PATCH', endpoint, sessionData);
+    } catch (error) {
+      if (error.response) {
+        throw new Error(`API Error ${error.response.status}: ${error.response.data?.message || error.response.statusText}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * List sessions in a project
+   * @param {number} projectId - Project ID
+   * @param {Object} [filters] - Filter options
+   * @param {string} [filters.state] - Filter by state (e.g., "active", "closed")
+   * @param {string} [filters.assignedTo] - Filter by assigned user ID
+   * @param {Array<string>} [filters.tags] - Filter by tags
+   * @returns {Promise<Array>} List of sessions
+   */
+  async listSessions(projectId, filters = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+      if (filters.state) queryParams.append('state', filters.state);
+      if (filters.assignedTo) queryParams.append('assigned_to', filters.assignedTo);
+      if (filters.tags && filters.tags.length > 0) {
+        filters.tags.forEach(tag => queryParams.append('tags[]', tag));
+      }
+      
+      const queryString = queryParams.toString();
+      const endpoint = `/projects/${projectId}/sessions${queryString ? `?${queryString}` : ''}`;
+      
+      if (this.client) {
+        const response = await this.client.get(endpoint);
+        return response.data;
+      }
+      return await this.request('GET', endpoint);
+    } catch (error) {
+      if (error.response) {
+        throw new Error(`API Error ${error.response.status}: ${error.response.data?.message || error.response.statusText}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Close a session
+   * @param {number} projectId - Project ID
+   * @param {number} sessionId - Session ID
+   * @returns {Promise<Object>} Updated session
+   */
+  async closeSession(projectId, sessionId) {
+    return this.updateSession(projectId, sessionId, { state: 'closed' });
+  }
+
+  /**
+   * Link session to automation run
+   * @param {number} projectId - Project ID
+   * @param {number} sessionId - Session ID
+   * @param {number} runId - Automation run ID
+   * @returns {Promise<Object>} Link result
+   */
+  async linkSessionToRun(projectId, sessionId, runId) {
+    try {
+      const endpoint = `/projects/${projectId}/sessions/${sessionId}/runs`;
+      const data = { run_id: runId };
+      if (this.client) {
+        const response = await this.client.post(endpoint, data);
+        return response.data;
+      }
+      return await this.request('POST', endpoint, data);
+    } catch (error) {
+      if (error.response) {
+        throw new Error(`API Error ${error.response.status}: ${error.response.data?.message || error.response.statusText}`);
+      }
+      throw error;
+    }
+  }
 }
 
 module.exports = TestmoAPI;

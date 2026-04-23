@@ -13,6 +13,7 @@
     "testmo:submit": "node scripts/testmo-submit.js",
     "testmo:create-cases": "node scripts/create-testmo-test-cases.js",
     "testmo:setup-features": "node scripts/setup-testmo-features.js",
+    "testmo:sessions": "node scripts/manage-sessions.js",
     "install:browsers": "playwright install chromium",
     "verify": "node scripts/verify-setup.js",
     "testmo:setup": "node scripts/testmo-setup.js",
