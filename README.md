@@ -471,7 +471,7 @@ npm test
 ### Common Issues
 
 1. **Node.js version error**
-   - Ensure Node.js 18+ is installed
+   - Ensure Node.js 24+ is installed
    - Use `nvm use` if using nvm (see `.nvmrc`)
 
 2. **Playwright browser not found**
