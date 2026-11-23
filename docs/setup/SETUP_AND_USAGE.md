@@ -6,7 +6,7 @@
 
 ## 📋 Quick Setup Checklist
 
-- [ ] Node.js 18+ installed
+- [ ] Node.js 24+ installed
 - [ ] Dependencies installed
 - [ ] Playwright browsers installed
 - [ ] Websites configured
@@ -27,7 +27,7 @@
 node --version
 ```
 
-**Required**: Node.js 18 or higher
+**Required**: Node.js 24 or higher
 
 If you need to upgrade:
 ```bash

@@ -1,7 +1,7 @@
 🚀 QUICK START GUIDE
 ====================
 
-1. Verify Node.js 18+
+1. Verify Node.js 24+
    node --version
    # If not 18+, run: nvm install 18 && nvm use 18
 

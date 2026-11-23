@@ -16,8 +16,8 @@ console.log('🔍 Verifying Website Monitor Testmo Setup...\n');
 // Check Node.js version
 const nodeVersion = process.version;
 const majorVersion = parseInt(nodeVersion.slice(1).split('.')[0]);
-if (majorVersion < 18) {
-  errors.push(`Node.js version ${nodeVersion} detected. Playwright requires Node.js 18 or higher.`);
+if (majorVersion < 24) {
+  errors.push(`Node.js version ${nodeVersion} detected. This project requires Node.js 24 or higher.`);
 } else {
   success.push(`✅ Node.js version ${nodeVersion} is compatible`);
 }
@@ -142,7 +142,7 @@ if (errors.length > 0) {
 
 console.log('🎉 Setup verification complete! All checks passed.\n');
 console.log('Next steps:');
-console.log('  1. If Node.js < 18, install Node.js 18+: nvm install 18 && nvm use 18');
+console.log('  1. If Node.js < 24, install Node.js 24+: nvm install 24 && nvm use 24');
 console.log('  2. Install Playwright browsers: npx playwright install chromium');
 console.log('  3. Run tests: npm test');
 console.log('  4. View dashboard: npm run dashboard');
